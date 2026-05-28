@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
+#define MAX_OBJ 20;
 
 typedef enum{
 	OBJ_INT,
@@ -11,7 +12,7 @@ typedef struct sObject{
 
 	unsigned char marked;
 	ObjectType type;
-	
+    struct sObject* next;	
 	union {
 		int value;
 
@@ -28,15 +29,26 @@ typedef struct sObject{
 #define STACK_MAX 256
 
 typedef struct{
+	Object* firstObject;
 	Object* stack[STACK_MAX];
+	
+	int numObjects;
+	int maxObjects;
+	
+
 	int stackSize;
 }VM;
 
 VM* newVM(){ 
 	VM* vm=malloc(sizeof(VM));
 	vm->stackSize=0;
+	vm->firstObject=NULL;
+	vm->numObjects=0;
+	vm->maxObjects=MAX_OBJ;
 	return vm;
 }
+
+void gc(VM* vm);
 
 void push(VM *vm,Object* obj){
 	assert(vm->stackSize<STACK_MAX);
@@ -49,9 +61,39 @@ Object* pop(VM* vm){
 }
 
 Object* newObject(VM* vm,ObjectType type){
+	if(vm->numObjects == vm->maxObjects) gc(vm);
+
 	Object* object=malloc(sizeof(Object));
 	object->type=type;
+	object->marked=0;
+	
+	if (vm->firstObject==NULL){
+		vm->firstObject=object;
+		return object;
+	}
+	
+	object->next=vm->firstObject;
+	vm->firstObject=object;
+
+	vm->numObjects++;
+	
 	return object;
+}
+
+
+void sweep(VM* vm){
+	Object** obj=&vm->firstObject;
+	while(*obj){
+		if((*obj)->marked==0){
+			Object* temp=*obj;
+			*obj=temp->next;
+			free(temp);
+			--vm->numObjects;
+			continue;
+		}
+		(*obj)->marked=0;
+		obj=&(*obj)->next;
+	}
 }
 
 void pushInt(VM* vm,int intValue){
@@ -67,6 +109,40 @@ Object* pushPair(VM* vm){
 	object->second=pop(vm);
 	push(vm,object);
 	return object;
+}
+
+
+
+void mark(Object* obj){
+	if (obj->marked) return; 
+
+	obj->marked=1;
+
+	if(obj->type==OBJ_PAIR){
+		mark(obj->first);
+		mark(obj->second);
+	}
+
+}
+
+void markAll(VM* vm){
+	for(int i=0;i<vm->stackSize;++i){
+		mark(vm->stack[i]);
+	}
+
+}
+
+
+
+void gc(VM* vm){
+	int numObj=vm->numObjects;
+
+	markAll(vm);
+	sweep(vm);
+
+	vm->maxObjects=vm->numObjects*2;
+
+	printf(" Before num:%d \nafter num :%d \n",numObj,vm->numObjects);
 }
 
 void main(){
