@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
-#define MAX_OBJ 20;
+#define MAX_OBJ 25;
 
 typedef enum{
 	OBJ_INT,
@@ -91,7 +91,7 @@ void sweep(VM* vm){
 			--vm->numObjects;
 			continue;
 		}
-		(*obj)->marked=0;
+		(*obj)->marked=0;//prepare for next sweep if not in stack
 		obj=&(*obj)->next;
 	}
 }
@@ -144,10 +144,24 @@ void gc(VM* vm){
 
 	printf(" Before num:%d \nafter num :%d \n",numObj,vm->numObjects);
 }
+void checkPerformance(VM* nwvm){
+	for(int i=0;i<600;i++){
+		for(int j=0;j<8;j++){
+			pushInt(nwvm,i);
+		}
+
+		for (int k=0;k<6;k++){
+			pop(nwvm);
+		}
+		
+	}
+	
+}
 
 void main(){
-	VM *nvm=newVM();
-	pushInt(nvm,5);
-	printf("%d \n",nvm->stackSize);
+	VM *nwvm=newVM();
+	pushInt(nwvm,5);
+	printf("%d \n",nwvm->stackSize);
+	checkPerformance(nwvm);
 }
 
