@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
-#define MAX_OBJ 25;
+#define MAX_OBJ 20;
 
 typedef enum{
 	OBJ_INT,
@@ -26,7 +26,7 @@ typedef struct sObject{
 	};
 } Object;
 
-#define STACK_MAX 256
+#define STACK_MAX 1056
 
 typedef struct{
 	Object* firstObject;
@@ -145,12 +145,12 @@ void gc(VM* vm){
 	printf(" Before num:%d \nafter num :%d \n",numObj,vm->numObjects);
 }
 void checkPerformance(VM* nwvm){
-	for(int i=0;i<600;i++){
-		for(int j=0;j<8;j++){
+	for(int i=0;i<1000;i++){
+		for(int j=0;j<4;j++){
 			pushInt(nwvm,i);
 		}
 
-		for (int k=0;k<6;k++){
+		for (int k=0;k<3;k++){
 			pop(nwvm);
 		}
 		
@@ -163,5 +163,8 @@ void main(){
 	pushInt(nwvm,5);
 	printf("%d \n",nwvm->stackSize);
 	checkPerformance(nwvm);
+	nwvm->stackSize=0;
+	gc(nwvm);
+	free(nwvm);
 }
 
