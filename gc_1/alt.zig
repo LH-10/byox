@@ -1,6 +1,9 @@
 const std = @import("std");
 const assert = std.debug.assert;
 
+const STACK_MAX = 1056;
+const maxObjs = 20;
+
 const ObjectType = enum {
     OBJ_INT,
     OBJ_PAIR,
@@ -40,9 +43,6 @@ const Object = struct {
     }
 };
 
-const STACK_MAX = 256;
-const maxObjs = 20;
-
 pub fn newObject(allocator: std.mem.Allocator, vm: *VM, Otype: ObjTyp) !*Object {
     if (vm.numObjects == vm.maxObjects) try vm.gc(allocator);
     var object: *Object = try allocator.create(Object);
@@ -63,6 +63,7 @@ pub fn newObject(allocator: std.mem.Allocator, vm: *VM, Otype: ObjTyp) !*Object 
     //std.debug.print("{any}", .{Otype});
     object.next = vm.firstObject;
     vm.firstObject = object;
+    vm.numObjects += 1;
     return object;
 }
 
@@ -143,16 +144,36 @@ const VM = struct {
     }
 };
 
+pub fn evaluatePerformance(vm: *VM, allocator: std.mem.Allocator) !void {
+    var i: i32 = 0;
+    while (i < 1000) : (i += 1) {
+        var j: i32 = 0;
+        while (j < 4) : (j += 1) {
+            try vm.pushInt(allocator, i);
+            //std.debug.print("hellopush", .{});
+        }
+        j = 0;
+        while (j < 3) : (j += 1) {
+            _ = try vm.pop();
+            //std.debug.print("hellpop\n", .{});
+        }
+    }
+}
+
 pub fn main() !void {
     var gpa: std.heap.DebugAllocator(.{}) = .init;
     const allocator = gpa.allocator();
     defer _ = gpa.deinit();
-    const myvm: *VM = try .init(allocator);
+    var myvm: *VM = try .init(allocator);
     defer allocator.destroy(myvm);
     std.debug.print("size:{d}", .{myvm.stackSize});
 
-    try myvm.pushInt(allocator, 4);
-    _ = try myvm.pop();
+    //    try myvm.pushInt(allocator, 4);
+    //   _ = try myvm.pop();
+    // try myvm.gc(allocator);
+
+    // std.debug.print("size:{d}", .{myvm.stackSize});
+    try evaluatePerformance(myvm, allocator);
+    myvm.stackSize = 0;
     try myvm.gc(allocator);
-    std.debug.print("size:{d}", .{myvm.stackSize});
 }
