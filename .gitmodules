@@ -1,0 +1,3 @@
+[submodule "lexgo"]
+	path = lexgo
+	url = https://github.com/LH-10/lexgo

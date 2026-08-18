@@ -4,18 +4,12 @@ const assert = std.debug.assert;
 const STACK_MAX = 1056;
 const maxObjs = 20;
 
-const ObjectType = enum {
-    OBJ_INT,
-    OBJ_PAIR,
-};
-
 const ObjTyp = enum {
     integer,
     pair,
 };
 
 const Object = struct {
-    //f_type: ObjectType,
     marked: u8 = 0,
     next: ?*Object = null,
     data: union(ObjTyp) {
@@ -75,12 +69,8 @@ const VM = struct {
     stackSize: usize = 0,
 
     pub fn init(allocator: std.mem.Allocator) !*VM {
-        //var buffer: [1000]u8 = undefined;
-        //var fba: std.heap.FixedBufferAllocator = .init(&buffer);
-        //const allocator = fba.allocator();
         const vm: *VM = try allocator.create(VM);
         vm.* = VM{};
-        // std.debug.print("{d}\n", .{vm.stackSize});
         return vm;
     }
 
@@ -170,7 +160,6 @@ pub fn main() !void {
 
     //    try myvm.pushInt(allocator, 4);
     //   _ = try myvm.pop();
-    // try myvm.gc(allocator);
 
     // std.debug.print("size:{d}", .{myvm.stackSize});
     try evaluatePerformance(myvm, allocator);
